@@ -1,52 +1,36 @@
 `timescale 1ns / 1ps
 
+module lifo(
+    input clk, rst, we, re,
+    input [7:0] data_in,
+    output reg [7:0] data_out,
+    output full, empty
+);
 
-module lifo_tb(
-
-    );
-    reg clk,rst,re,we;
-    reg [7:0]data_in;
-    wire [7:0] data_out;
-    wire full,empty;
-    lifo uut(.clk(clk),.rst(rst),.data_in(data_in),
-             .data_out(data_out),.full(full),.empty(empty),.we(we),.re(re));
-    initial begin
-        clk=0;
-        rst=0;
-        data_in=0;
-        we=0;
-        re=0;
-    end
-    always #5 clk=~clk;
-    task data(input [7:0]a);
-        begin
-            @(negedge clk);
-            data_in=a;
-            we=1'b1;
-            re=1'b0;
-        end
-    endtask
-    task reset();
-        begin
-            @(negedge clk);
-            rst=1'b1;
-            @(negedge clk);
-            rst=1'b0;
-        end
-    endtask
-    task read();begin
-        @(negedge clk);
-        re=1'b1;
-        we=1'b0;
-        end
-    endtask
+    reg [7:0] mem[15:0];
+    reg [4:0] pointer; // Changed from integer to 5-bit register
     integer i;
-    initial begin
-        reset();
-        for(i=0;i<8;i=i+1)begin
-            data(i);
+
+    // Synchronous logic
+    always @(posedge clk) begin
+        if (rst) begin
+            data_out <= 8'd0;
+            pointer <= 5'd0;
+            for (i = 0; i < 16; i = i + 1)
+                mem[i] <= 8'd0;
         end
-        read();
+        else if (we && !full) begin
+            mem[pointer] <= data_in;
+            pointer <= pointer + 1;
+        end
+        else if (re && !empty) begin
+            pointer <= pointer - 1;
+            data_out <= mem[pointer - 1];
+        end
     end
-    
+
+    assign full = (pointer == 5'd16); // Full when pointer reaches 16
+    assign empty = (pointer == 5'd0); // Empty when pointer is 0
+
 endmodule
+
