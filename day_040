@@ -1,0 +1,59 @@
+module prime_numbers;
+  class rando;
+    rand int y[300];    // use rand unless you specifically need randc
+    int q[$];           // queue to hold primes
+
+    // Constrain values between 200 and 300
+    constraint sequenc { foreach(y[i]) y[i] inside {[200:300]}; }
+
+    // Called after randomization
+    function void post_randomize();
+      //q.delete(); // clear previous results
+      foreach (y[i]) begin
+        if (prime_or_not(y[i]))
+          q.push_back(y[i]);
+      end
+    endfunction
+
+    // Prime check
+    function bit prime_or_not(int b);
+      if (b < 2) return 0;
+      for (int i = 2; i < b/2; i++) begin
+        if (b % i == 0)
+          return 0;
+      end
+      return 1;
+    endfunction
+  endclass
+
+  rando handle;
+  initial begin
+    handle = new();
+   begin
+    assert(handle.randomize());
+    $display("Primes between 200 and 300: %p", handle.q);
+    end
+  end
+endmodule
+
+
+module odd_numbers;
+    class matrix;
+        rand bit[3:0] a[3][3];
+        constraint magic{foreach (a[i,j])
+                            {
+                                a[i][j]%2==1
+                            };
+                        }
+    endclass :matrix
+    matrix p1;
+    initial begin
+        repeat (4)
+            begin
+            p1=new();
+            assert(p1.randomize());
+            $display("--------------------------------------");
+            $display("%p",p1.a);
+            end
+    end
+endmodule
